@@ -3,18 +3,36 @@ import pickle
 import pandas as pd
 import numpy as np
 import ast
+import os
+
+# # === Load Trained Model and Encoder ===
+# rf_model = pickle.load(open('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/models/rf_model.pkl', 'rb'))
+# disease_encoder = pickle.load(open('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/models/disease_encoder.pkl', 'rb'))
+
+# # === Load Supporting CSV Files ===
+# desc_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/description.csv')
+# med_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/medications.csv')
+# diet_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/diets.csv')
+# prec_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/precautions_df.csv')
+# work_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/workout_df.csv')
+# training_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/Training.csv')
+
+# Get the directory containing this script
+base_dir = os.path.dirname(os.path.abspath(__file__))
+models_dir = os.path.join(base_dir, '..', 'models')
+data_dir = os.path.join(base_dir, '..', 'data')
 
 # === Load Trained Model and Encoder ===
-rf_model = pickle.load(open('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/models/rf_model.pkl', 'rb'))
-disease_encoder = pickle.load(open('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/models/disease_encoder.pkl', 'rb'))
+rf_model = pickle.load(open(os.path.join(models_dir, 'rf_model.pkl'), 'rb'))
+disease_encoder = pickle.load(open(os.path.join(models_dir, 'disease_encoder.pkl'), 'rb'))
 
 # === Load Supporting CSV Files ===
-desc_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/description.csv')
-med_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/medications.csv')
-diet_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/diets.csv')
-prec_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/precautions_df.csv')
-work_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/workout_df.csv')
-training_df = pd.read_csv('C:/Users/Dell/Desktop/oneeb dissertation/Dataset/raw data/Training.csv')
+desc_df = pd.read_csv(os.path.join(data_dir, 'description.csv'))
+med_df = pd.read_csv(os.path.join(data_dir, 'medications.csv'))
+diet_df = pd.read_csv(os.path.join(data_dir, 'diets.csv'))
+prec_df = pd.read_csv(os.path.join(data_dir, 'precautions_df.csv'))
+work_df = pd.read_csv(os.path.join(data_dir, 'workout_df.csv'))
+training_df = pd.read_csv(os.path.join(data_dir, 'Training.csv'))
 
 # === Extract List of Symptoms from Training Data ===
 symptom_list = list(training_df.columns[:-1])

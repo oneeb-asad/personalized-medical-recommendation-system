@@ -1,44 +1,713 @@
-<!-- File: templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Medical Recommendation System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            background-color: #f2f4f8;
-            padding: 20px;
+      :root {
+        --primary-color: #2c5aa0;
+        --secondary-color: #64b5f6;
+        --accent-color: #81c784;
+        --background-gradient: linear-gradient(
+          135deg,
+          #667eea 0%,
+          #764ba2 100%
+        );
+        --card-shadow: 0 15px 35px rgba(50, 50, 93, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--background-gradient);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        padding: 20px 0;
+      }
+
+      .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .header-section {
+        text-align: center;
+        margin-bottom: 40px;
+        animation: fadeInDown 1s ease-out;
+      }
+
+      .header-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          var(--secondary-color)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .header-icon i {
+        font-size: 2.5rem;
+        color: white;
+      }
+
+      h1 {
+        color: white;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
+        font-weight: 300;
+      }
+
+      .symptoms-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 1s ease-out;
+      }
+
+      .section-title {
+        color: var(--primary-color);
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      .section-title::after {
+        content: "";
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(
+          45deg,
+          var(--secondary-color),
+          var(--accent-color)
+        );
+        display: block;
+        margin: 10px auto;
+        border-radius: 2px;
+      }
+
+      .symptoms-container {
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 2px solid #e3f2fd;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 40px;
+        background: linear-gradient(145deg, #fafbff, #f0f4ff);
+        position: relative;
+      }
+
+      .symptoms-container::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      .symptoms-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .symptoms-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          45deg,
+          var(--secondary-color),
+          var(--accent-color)
+        );
+        border-radius: 10px;
+        border: 2px solid #f1f1f1;
+      }
+
+      .symptoms-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+      }
+
+      .search-container {
+        margin-bottom: 25px;
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 15px 50px 15px 20px;
+        border: 2px solid #e3f2fd;
+        border-radius: 25px;
+        font-size: 1rem;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        box-shadow: 0 4px 15px rgba(100, 181, 246, 0.2);
+      }
+
+      .search-icon {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+        font-size: 1.2rem;
+      }
+
+      .clear-search {
+        position: absolute;
+        right: 50px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: none;
+      }
+
+      .clear-search:hover {
+        color: var(--primary-color);
+      }
+
+      .symptoms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .symptom-item {
+        background: linear-gradient(145deg, #f8f9ff, #e8eeff);
+        border: 2px solid transparent;
+        border-radius: 15px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .symptom-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .symptom-item:hover::before {
+        left: 100%;
+      }
+
+      .symptom-item:hover {
+        transform: translateY(-5px);
+        border-color: var(--secondary-color);
+        box-shadow: 0 10px 25px rgba(100, 181, 246, 0.2);
+      }
+
+      .symptom-item.selected {
+        background: linear-gradient(145deg, var(--accent-color), #66bb6a);
+        color: white;
+        border-color: var(--accent-color);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(129, 199, 132, 0.3);
+      }
+
+      .symptom-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .symptom-label {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        font-size: 1rem;
+        cursor: pointer;
+        position: relative;
+        z-index: 2;
+      }
+
+      .symptom-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--secondary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        transition: all 0.3s ease;
+      }
+
+      .symptom-item.selected .symptom-icon {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .symptom-icon i {
+        color: white;
+        font-size: 1.1rem;
+      }
+
+      .predict-section {
+        text-align: center;
+        margin-top: 40px;
+      }
+
+      .predict-btn {
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        border: none;
+        border-radius: 50px;
+        padding: 18px 50px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(44, 90, 160, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .predict-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .predict-btn:hover::before {
+        left: 100%;
+      }
+
+      .predict-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(44, 90, 160, 0.4);
+      }
+
+      .predict-btn:active {
+        transform: translateY(0);
+      }
+
+      .predict-btn i {
+        margin-left: 10px;
+      }
+
+      .selected-count {
+        background: var(--accent-color);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: inline-block;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-50px);
         }
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .form-check {
-            margin-bottom: 10px;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(50px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .error-message {
+        background: linear-gradient(45deg, #f44336, #e91e63);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        font-weight: 500;
+        text-align: center;
+        animation: shake 0.5s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.2rem;
+        }
+
+        .symptoms-grid {
+          grid-template-columns: 1fr;
+          gap: 15px;
+        }
+
+        .symptoms-card {
+          padding: 25px;
+          margin: 0 10px;
+        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h2 class="mb-4 text-center">Select Your Symptoms</h2>
-        <form action="/predict" method="POST">
-            <div class="row">
-                {% for symptom in symptoms %}
-                <div class="col-md-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="symptoms" value="{{ symptom }}" id="{{ symptom }}">
-                        <label class="form-check-label" for="{{ symptom }}">{{ symptom.replace('_', ' ').title() }}</label>
-                    </div>
-                </div>
-                {% endfor %}
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Header Section -->
+      <div class="header-section">
+        <div class="header-icon">
+          <i class="fas fa-stethoscope"></i>
+        </div>
+        <h1>Medical Recommendation System</h1>
+        <p class="subtitle">AI-Powered Health Analysis & Disease Prediction</p>
+      </div>
+
+      <!-- Main Card -->
+      <div class="symptoms-card">
+        <h2 class="section-title">
+          <i
+            class="fas fa-clipboard-list"
+            style="margin-right: 10px; color: var(--secondary-color)"
+          ></i>
+          Select Your Symptoms
+        </h2>
+
+        <!-- Error Message (if any) -->
+        {% if error %}
+        <div class="error-message">
+          <i class="fas fa-exclamation-triangle" style="margin-right: 10px"></i>
+          {{ error }}
+        </div>
+        {% endif %}
+
+        <form id="symptomForm" action="/predict" method="POST">
+          <!-- Search Bar -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="searchInput"
+              class="search-input"
+              placeholder="Search for symptoms... (e.g., fever, cough, headache)"
+            />
+            <button type="button" id="clearSearch" class="clear-search">
+              ×
+            </button>
+            <i class="fas fa-search search-icon"></i>
+          </div>
+
+          <!-- Scrollable Symptoms Container -->
+          <div class="symptoms-container" id="symptomsContainer">
+            <div class="symptoms-grid" id="symptomsGrid">
+              <!-- Dynamic symptoms from Flask -->
+              {% for symptom in symptoms %}
+              <div
+                class="symptom-item"
+                onclick="toggleSymptom(this)"
+                data-symptom="{{ symptom.lower() }}"
+              >
+                <input
+                  type="checkbox"
+                  name="symptoms"
+                  value="{{ symptom }}"
+                  class="symptom-checkbox"
+                />
+                <label class="symptom-label">
+                  <div class="symptom-icon">
+                    {% if 'fever' in symptom.lower() %}
+                    <i class="fas fa-thermometer-full"></i>
+                    {% elif 'pain' in symptom.lower() %}
+                    <i class="fas fa-band-aid"></i>
+                    {% elif 'cough' in symptom.lower() %}
+                    <i class="fas fa-lungs"></i>
+                    {% elif 'headache' in symptom.lower() %}
+                    <i class="fas fa-head-side-virus"></i>
+                    {% elif 'nausea' in symptom.lower() or 'vomit' in
+                    symptom.lower() %}
+                    <i class="fas fa-dizzy"></i>
+                    {% elif 'fatigue' in symptom.lower() %}
+                    <i class="fas fa-bed"></i>
+                    {% elif 'rash' in symptom.lower() or 'skin' in
+                    symptom.lower() %}
+                    <i class="fas fa-allergies"></i>
+                    {% elif 'breath' in symptom.lower() %}
+                    <i class="fas fa-lungs-virus"></i>
+                    {% elif 'itch' in symptom.lower() %}
+                    <i class="fas fa-hand-paper"></i>
+                    {% elif 'sneez' in symptom.lower() %}
+                    <i class="fas fa-head-side-cough"></i>
+                    {% elif 'stomach' in symptom.lower() %}
+                    <i class="fas fa-procedures"></i>
+                    {% elif 'joint' in symptom.lower() %}
+                    <i class="fas fa-bone"></i>
+                    {% elif 'eye' in symptom.lower() %}
+                    <i class="fas fa-eye"></i>
+                    {% elif 'throat' in symptom.lower() %}
+                    <i class="fas fa-head-side-cough-slash"></i>
+                    {% elif 'sweat' in symptom.lower() %}
+                    <i class="fas fa-tint"></i>
+                    {% elif 'urine' in symptom.lower() %}
+                    <i class="fas fa-flask"></i>
+                    {% elif 'weight' in symptom.lower() %}
+                    <i class="fas fa-weight"></i>
+                    {% elif 'mood' in symptom.lower() %}
+                    <i class="fas fa-brain"></i>
+                    {% elif 'muscle' in symptom.lower() %}
+                    <i class="fas fa-dumbbell"></i>
+                    {% elif 'anxiety' in symptom.lower() %}
+                    <i class="fas fa-heart"></i>
+                    {% elif 'swelling' in symptom.lower() %}
+                    <i class="fas fa-plus-circle"></i>
+                    {% elif 'chills' in symptom.lower() %}
+                    <i class="fas fa-snowflake"></i>
+                    {% elif 'diarr' in symptom.lower() %}
+                    <i class="fas fa-toilet"></i>
+                    {% elif 'constipat' in symptom.lower() %}
+                    <i class="fas fa-ban"></i>
+                    {% elif 'lethargy' in symptom.lower() %}
+                    <i class="fas fa-battery-quarter"></i>
+                    {% elif 'spots' in symptom.lower() or 'patches' in
+                    symptom.lower() %}
+                    <i class="fas fa-circle"></i>
+                    {% elif 'burning' in symptom.lower() %}
+                    <i class="fas fa-fire"></i>
+                    {% elif 'yellow' in symptom.lower() %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% elif 'nodal' in symptom.lower() or 'lymph' in
+                    symptom.lower() %}
+                    <i class="fas fa-dot-circle"></i>
+                    {% elif 'loss' in symptom.lower() and 'appetite' in
+                    symptom.lower() %}
+                    <i class="fas fa-utensils-slash"></i>
+                    {% elif 'restless' in symptom.lower() %}
+                    <i class="fas fa-running"></i>
+                    {% elif 'sugar' in symptom.lower() %}
+                    <i class="fas fa-candy-cane"></i>
+                    {% elif 'dehydrat' in symptom.lower() %}
+                    <i class="fas fa-tint-slash"></i>
+                    {% elif 'sunken' in symptom.lower() %}
+                    <i class="fas fa-eye-slash"></i>
+                    {% elif 'malaise' in symptom.lower() %}
+                    <i class="fas fa-frown"></i>
+                    {% elif 'blurred' in symptom.lower() or 'vision' in
+                    symptom.lower() %}
+                    <i class="fas fa-glasses"></i>
+                    {% elif 'phlegm' in symptom.lower() %}
+                    <i class="fas fa-lungs"></i>
+                    {% elif 'ulcer' in symptom.lower() %}
+                    <i class="fas fa-circle-notch"></i>
+                    {% elif 'micturition' in symptom.lower() %}
+                    <i class="fas fa-fire-alt"></i>
+                    {% elif 'acidity' in symptom.lower() %}
+                    <i class="fas fa-burn"></i>
+                    {% elif 'indigestion' in symptom.lower() %}
+                    <i class="fas fa-stomach"></i>
+                    {% elif 'dark' in symptom.lower() and 'urine' in
+                    symptom.lower() %}
+                    <i class="fas fa-vial"></i>
+                    {% elif 'fluid' in symptom.lower() and 'overload' in
+                    symptom.lower() %}
+                    <i class="fas fa-fill-drip"></i>
+                    {% elif 'liver' in symptom.lower() %}
+                    <i class="fas fa-prescription-bottle"></i>
+                    {% else %}
+                    <i class="fas fa-stethoscope"></i>
+                    {% endif %}
+                  </div>
+                  {{ symptom.replace('_', ' ').title() }}
+                </label>
+              </div>
+              {% endfor %}
             </div>
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">Predict Disease</button>
+          </div>
+
+          <div class="predict-section">
+            <div
+              class="selected-count"
+              id="selectedCount"
+              style="display: none"
+            >
+              <i class="fas fa-check-circle"></i>
+              <span id="countText">0 symptoms selected</span>
             </div>
+
+            <button type="submit" class="predict-btn">
+              <i class="fas fa-brain"></i>
+              Analyze Symptoms & Predict Disease
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
         </form>
+      </div>
     </div>
-</body>
+
+    <script>
+      let selectedCount = 0;
+
+      function toggleSymptom(element) {
+        const checkbox = element.querySelector(".symptom-checkbox");
+        const countElement = document.getElementById("selectedCount");
+        const countText = document.getElementById("countText");
+
+        checkbox.checked = !checkbox.checked;
+
+        if (checkbox.checked) {
+          element.classList.add("selected");
+          selectedCount++;
+        } else {
+          element.classList.remove("selected");
+          selectedCount--;
+        }
+
+        // Update selected count display
+        if (selectedCount > 0) {
+          countElement.style.display = "inline-block";
+          countText.textContent = `${selectedCount} symptom${
+            selectedCount > 1 ? "s" : ""
+          } selected`;
+        } else {
+          countElement.style.display = "none";
+        }
+      }
+
+      // Search functionality
+      const searchInput = document.getElementById("searchInput");
+      const clearSearch = document.getElementById("clearSearch");
+      const symptomItems = document.querySelectorAll(".symptom-item");
+
+      searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        // Show/hide clear button
+        clearSearch.style.display = searchTerm ? "block" : "none";
+
+        symptomItems.forEach((item) => {
+          const symptomText = item.getAttribute("data-symptom");
+          const symptomLabel = item
+            .querySelector(".symptom-label")
+            .textContent.toLowerCase();
+
+          if (
+            symptomText.includes(searchTerm) ||
+            symptomLabel.includes(searchTerm)
+          ) {
+            item.style.display = "block";
+            visibleCount++;
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+
+      clearSearch.addEventListener("click", function () {
+        searchInput.value = "";
+        this.style.display = "none";
+
+        // Show all symptoms
+        symptomItems.forEach((item) => {
+          item.style.display = "block";
+        });
+      });
+
+      // Basic form validation - only prevent submission if no symptoms selected
+      document
+        .getElementById("symptomForm")
+        .addEventListener("submit", function (e) {
+          const checkboxes = document.querySelectorAll(
+            'input[name="symptoms"]:checked'
+          );
+
+          if (checkboxes.length === 0) {
+            e.preventDefault();
+            alert("Please select at least one symptom before predicting.");
+            return false;
+          }
+        });
+    </script>
+  </body>
 </html>
