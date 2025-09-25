@@ -15,3 +15,407 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+body {
+  background: var(--background-gradient);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+html {
+  background: var(--background-gradient);
+  background-attachment: fixed;
+  min-height: 100%;
+}
+
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 1s ease-out;
+}
+
+.result-icon {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(45deg, var(--success-color), var(--accent-color));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 12px 30px rgba(76, 175, 80, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.result-icon i {
+  font-size: 3rem;
+  color: white;
+}
+
+.main-title {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.predicted-disease {
+  background: linear-gradient(45deg, var(--danger-color), #e91e63);
+  color: white;
+  padding: 15px 30px;
+  border-radius: 30px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  display: inline-block;
+  margin: 10px 0;
+  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+  animation: slideInUp 1s ease-out;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 300;
+  margin-top: 15px;
+}
+
+.results-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 25px;
+  padding: 40px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeInUp 1s ease-out;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.result-card {
+  background: linear-gradient(145deg, #f8f9ff, #e8eeff);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--section-shadow);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.result-card:hover::before {
+  left: 100%;
+}
+
+.result-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--secondary-color);
+  box-shadow: 0 15px 40px rgba(100, 181, 246, 0.2);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.card-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  color: white;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.description-card .card-icon {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+}
+
+.medications-card .card-icon {
+  background: linear-gradient(45deg, #e91e63, #f06292);
+}
+
+.diet-card .card-icon {
+  background: linear-gradient(45deg, var(--success-color), var(--accent-color));
+}
+
+.precautions-card .card-icon {
+  background: linear-gradient(45deg, var(--warning-color), #ffb74d);
+}
+
+.workouts-card .card-icon {
+  background: linear-gradient(45deg, #9c27b0, #ba68c8);
+}
+
+.card-title {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+}
+
+.description-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+  text-align: justify;
+}
+
+.recommendation-list {
+  list-style: none;
+  padding: 0;
+}
+
+.recommendation-item {
+  background: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border-left: 4px solid var(--secondary-color);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.recommendation-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateX(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-item::before {
+  content: "●";
+  color: var(--secondary-color);
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.medications-card .recommendation-item {
+  border-left-color: #e91e63;
+}
+
+.medications-card .recommendation-item::before {
+  content: "💊";
+}
+
+.diet-card .recommendation-item {
+  border-left-color: var(--success-color);
+}
+
+.diet-card .recommendation-item::before {
+  content: "🥗";
+}
+
+.precautions-card .recommendation-item {
+  border-left-color: var(--warning-color);
+}
+
+.precautions-card .recommendation-item::before {
+  content: "⚠️";
+}
+
+.workouts-card .recommendation-item {
+  border-left-color: #9c27b0;
+}
+
+.workouts-card .recommendation-item::before {
+  content: "💪";
+}
+
+.empty-state {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  border: 2px dashed #ddd;
+}
+
+.description-full-width {
+  grid-column: 1 / -1;
+}
+
+.action-section {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.back-btn {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  border: none;
+  border-radius: 50px;
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(44, 90, 160, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.back-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.back-btn:hover::before {
+  left: 100%;
+}
+
+.back-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(44, 90, 160, 0.4);
+  text-decoration: none;
+  color: white;
+}
+
+.back-btn:active {
+  transform: translateY(0);
+}
+
+.disclaimer {
+  background: linear-gradient(45deg, #ff5722, #ff7043);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: 30px;
+  text-align: center;
+  font-size: 0.95rem;
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
+}
+
+.disclaimer i {
+  margin-right: 8px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2rem;
+  }
+  
+  .predicted-disease {
+    font-size: 1.4rem;
+    padding: 12px 25px;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .results-container {
+    padding: 25px;
+    margin: 0 10px;
+  }
+  
+  .result-card {
+    padding: 20px;
+  }
+}
