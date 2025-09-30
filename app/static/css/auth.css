@@ -1,0 +1,359 @@
+/* Authentication pages styling - Simple academic project approach */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+.main-container {
+  max-width: 450px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header section */
+.auth-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-icon {
+  width: 60px;
+  height: 60px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.auth-icon i {
+  font-size: 1.8rem;
+  color: white;
+}
+
+.auth-title {
+  color: #2c3e50;
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.auth-subtitle {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Main card */
+.auth-card {
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+}
+
+/* Form styling */
+.auth-form {
+  margin-bottom: 25px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.form-label i {
+  margin-right: 6px;
+  color: #4a90e2;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+/* Password input with toggle */
+.password-input {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.password-toggle:hover {
+  color: #4a90e2;
+}
+
+/* Remember me checkbox */
+.remember-check {
+  margin-bottom: 25px;
+}
+
+.remember-check .form-check-label {
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Submit button */
+.auth-btn {
+  width: 100%;
+  background-color: #4a90e2;
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-btn:hover {
+  background-color: #357abd;
+}
+
+.auth-btn i {
+  margin-right: 8px;
+}
+
+/* Links section */
+.auth-links {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.auth-links p {
+  margin-bottom: 10px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.auth-links a {
+  color: #4a90e2;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+/* Demo access info */
+.demo-access {
+  background-color: #e8f4f8;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 15px;
+  border-left: 4px solid #4a90e2;
+}
+
+.demo-text {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 0.85rem;
+}
+
+.demo-text i {
+  margin-right: 6px;
+  color: #4a90e2;
+}
+
+/* Medical disclaimer */
+.medical-disclaimer {
+  background-color: #e74c3c;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 25px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.medical-disclaimer i {
+  margin-right: 6px;
+}
+
+/* Alert messages */
+.alert {
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+}
+
+.alert i {
+  margin-right: 8px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+.btn-close {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+/* Profile page specific styles */
+.user-info {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  background-color: #4a90e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0 auto 15px;
+}
+
+.diagnosis-history {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #ddd;
+}
+
+.history-item {
+  padding: 15px;
+  border-left: 4px solid #4a90e2;
+  margin-bottom: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-date {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.history-disease {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.history-symptoms {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Terms modal basic styling */
+.modal-content {
+  border-radius: 8px;
+}
+
+.modal-header {
+  background-color: #4a90e2;
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-body h6 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-top: 15px;
+  margin-bottom: 8px;
+}
+
+.modal-body h6:first-child {
+  margin-top: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .main-container {
+    padding: 0 15px;
+  }
+  
+  .auth-card {
+    padding: 20px;
+  }
+  
+  .auth-title {
+    font-size: 1.8rem;
+  }
+}

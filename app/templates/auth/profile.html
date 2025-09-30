@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - Medical Recommendation System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/auth.css') }}"
+    />
+  </head>
+  <body>
+    <div class="main-container" style="max-width: 800px">
+      <div class="auth-section">
+        <div class="auth-icon">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <h1 class="auth-title">User Profile</h1>
+        <p class="auth-subtitle">
+          Manage your account and view diagnosis history
+        </p>
+      </div>
+
+      <div class="auth-card">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div
+          class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show"
+          role="alert"
+        >
+          <i
+            class="fas fa-{{ 'exclamation-triangle' if category == 'danger' or category == 'warning' else 'check-circle' if category == 'success' else 'info-circle' }}"
+          ></i>
+          {{ message }}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+          ></button>
+        </div>
+        {% endfor %} {% endif %} {% endwith %}
+
+        <!-- User Info -->
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ user.username[0].upper() if user.username else 'U' }}
+          </div>
+          <h3>{{ user.username }}</h3>
+          <p class="text-muted">{{ user.email }}</p>
+
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <a href="{{ url_for('home') }}" class="btn btn-primary">
+                <i class="fas fa-stethoscope"></i> New Diagnosis
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a
+                href="{{ url_for('logout') }}"
+                class="btn btn-outline-secondary"
+              >
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnosis History -->
+        <div class="diagnosis-history">
+          <h4>
+            <i class="fas fa-history"></i>
+            Recent Diagnoses
+          </h4>
+
+          {% if history %} {% for item in history %}
+          <div class="history-item">
+            <div class="history-date">{{ item[3] }}</div>
+            <div class="history-disease">
+              {{ item[1] }} {% if item[2] %}
+              <span class="badge bg-info"
+                >{{ "%.1f"|format(item[2]) }}% confidence</span
+              >
+              {% endif %}
+            </div>
+            <div class="history-symptoms">
+              <strong>Symptoms:</strong> {{ item[0].replace(',', ', ') }}
+            </div>
+            {% if item[4] %}
+            <div class="mt-2">
+              <span class="badge bg-warning">Rated: {{ item[4] }}/5</span>
+              {% if item[5] %}
+              <small class="text-muted">- {{ item[5] }}</small>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %} {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+            <p>
+              No diagnosis history yet.
+              <a href="{{ url_for('home') }}">Start your first diagnosis</a>
+            </p>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Navigation -->
+        <div class="text-center mt-4">
+          <a href="{{ url_for('home') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Auto-dismiss alerts
+      setTimeout(() => {
+        const alerts = document.querySelectorAll(".alert");
+        alerts.forEach((alert) => {
+          if (alert.classList.contains("show")) {
+            alert.classList.remove("show");
+            alert.classList.add("fade");
+          }
+        });
+      }, 5000);
+    </script>
+  </body>
+</html>
