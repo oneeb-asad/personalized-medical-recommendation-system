@@ -21,6 +21,23 @@
   </head>
   <body>
     <div class="main-container">
+      <!-- User Navigation Bar (only shown when logged in) -->
+      {% if current_user.is_authenticated %}
+      <div class="user-nav">
+        <div class="user-info-nav">
+          <i class="fas fa-user-circle"></i>
+          Welcome, {{ current_user.username }}
+        </div>
+        <div>
+          <a href="{{ url_for('profile') }}" class="btn btn-sm btn-light me-2">
+            <i class="fas fa-user"></i> Profile
+          </a>
+          <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+      {% endif %}
       <!-- Header Section -->
       <div class="header-section">
         <div class="header-icon">
