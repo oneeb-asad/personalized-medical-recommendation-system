@@ -12,7 +12,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
     />
-    <!--Calling css file here -->
     <link
       rel="stylesheet"
       type="text/css"
@@ -29,6 +28,12 @@
           Welcome, {{ current_user.username }}
         </div>
         <div>
+          <a
+            href="{{ url_for('evaluation') }}"
+            class="btn btn-sm btn-warning me-2"
+          >
+            <i class="fas fa-chart-bar"></i> Evaluation
+          </a>
           <a href="{{ url_for('profile') }}" class="btn btn-sm btn-light me-2">
             <i class="fas fa-user"></i> Profile
           </a>
@@ -38,6 +43,7 @@
         </div>
       </div>
       {% endif %}
+
       <!-- Header Section -->
       <div class="header-section">
         <div class="header-icon">
@@ -52,7 +58,7 @@
         <h2 class="section-title">
           <i
             class="fas fa-clipboard-list"
-            style="margin-right: 10px; color: var(--secondary-color)"
+            style="margin-right: 10px; color: #4a90e2"
           ></i>
           Select Your Symptoms
         </h2>
@@ -80,9 +86,10 @@
             <i class="fas fa-search search-icon"></i>
           </div>
 
-          <!-- Simplifying symptoms section -->
+          <!-- Scrollable Symptoms Container -->
           <div class="symptoms-container" id="symptomsContainer">
             <div class="symptoms-grid" id="symptomsGrid">
+              <!-- Dynamic symptoms from Flask -->
               {% for symptom in symptoms %}
               <div
                 class="symptom-item"
@@ -97,7 +104,6 @@
                 />
                 <label class="symptom-label">
                   <div class="symptom-icon">
-                    <!-- Icons Logic -->
                     <i class="{{ symptom_icons[symptom] }}"></i>
                   </div>
                   {{ symptom.replace('_', ' ').title() }}
@@ -127,7 +133,6 @@
       </div>
     </div>
 
-    <!-- JavaScript stays the same -->
     <script>
       let selectedCount = 0;
 
@@ -184,7 +189,6 @@
       clearSearch.addEventListener("click", function () {
         searchInput.value = "";
         this.style.display = "none";
-
         symptomItems.forEach((item) => {
           item.style.display = "block";
         });
@@ -196,7 +200,6 @@
           const checkboxes = document.querySelectorAll(
             'input[name="symptoms"]:checked'
           );
-
           if (checkboxes.length === 0) {
             e.preventDefault();
             alert("Please select at least one symptom before predicting.");
