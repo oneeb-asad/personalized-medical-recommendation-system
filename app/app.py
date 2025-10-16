@@ -228,21 +228,21 @@ def evaluation():
                          evaluation=evaluation_data,
                          user=current_user)
 
-@app.route('/feedback', methods=['POST'])
-@login_required
-def submit_feedback():
-    """Handle user feedback on predictions"""
-    try:
-        diagnosis_id = request.form.get('diagnosis_id')
-        rating = request.form.get('rating')
-        feedback_text = request.form.get('feedback')
+# @app.route('/feedback', methods=['POST'])
+# @login_required
+# def submit_feedback():
+#     """Handle user feedback on predictions"""
+#     try:
+#         diagnosis_id = request.form.get('diagnosis_id')
+#         rating = request.form.get('rating')
+#         feedback_text = request.form.get('feedback')
         
-        flash('Thank you for your feedback! It helps improve our system.', 'success')
+#         flash('Thank you for your feedback! It helps improve our system.', 'success')
         
-    except Exception as e:
-        flash('Error submitting feedback. Please try again.', 'danger')
+#     except Exception as e:
+#         flash('Error submitting feedback. Please try again.', 'danger')
     
-    return redirect(url_for('profile'))
+#     return redirect(url_for('profile'))
 
 @app.route('/results/<path:filename>')
 def serve_results(filename):
@@ -316,14 +316,6 @@ def api_health():
         'all_models_loaded': all_models_loaded
     }
 
-# # === Error Handlers ===
-# @app.errorhandler(404)
-# def not_found_error(error):
-#     return render_template('errors/404.html'), 404
-
-# @app.errorhandler(500)
-# def internal_error(error):
-#     return render_template('errors/500.html'), 500
 
 # === Start Server ===
 if __name__ == '__main__':
