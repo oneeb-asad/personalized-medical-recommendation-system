@@ -4,42 +4,124 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Medical Diagnosis Result</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      rel="stylesheet"
-    />
-    <!-- Link to your custom result CSS file -->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/result.css') }}"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"
+          integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/result.css') }}" />
+    <style>
+      .model-agree  { background: #d4edda; border-left: 4px solid #28a745; }
+      .model-differ { background: #fff3cd; border-left: 4px solid #ffc107; }
+      .importance-bar { height: 8px; border-radius: 4px; background: #4a90e2; }
+      .severity-badge { font-size: 1.1rem; }
+      .star-rating label { font-size: 1.6rem; cursor: pointer; color: #ccc; }
+      .star-rating input:checked ~ label,
+      .star-rating label:hover,
+      .star-rating label:hover ~ label { color: #f39c12; }
+      .star-rating { display: flex; flex-direction: row-reverse; gap: 4px; }
+    </style>
   </head>
   <body>
     <div class="main-container">
-      <!-- Header Section -->
+
+      <!-- Header -->
       <div class="header-section">
-        <div class="result-icon">
-          <i class="fas fa-user-md"></i>
-        </div>
+        <div class="result-icon"><i class="fas fa-user-md"></i></div>
         <h1 class="main-title">Diagnosis Complete</h1>
         <div class="predicted-disease">{{ disease }}</div>
-        <p class="subtitle">AI-Generated Health Analysis & Recommendations</p>
+
+        <!-- Confidence badge -->
+        {% if confidence %}
+        <div class="mt-2">
+          <span class="badge bg-{% if confidence >= 80 %}success{% elif confidence >= 50 %}warning{% else %}danger{% endif %} fs-6 severity-badge">
+            <i class="fas fa-chart-pie"></i> {{ confidence }}% Confidence
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- Severity score -->
+        {% if severity_score %}
+        <div class="mt-2">
+          <span class="badge bg-secondary severity-badge">
+            <i class="fas fa-thermometer-half"></i> Symptom Severity Score: {{ severity_score }}
+          </span>
+        </div>
+        {% endif %}
+
+        <p class="subtitle mt-2">AI-Generated Health Analysis &amp; Recommendations</p>
       </div>
 
-      <!-- Results Container -->
       <div class="results-container">
+
+        <!-- ── Model Comparison ─────────────────────────────────────────── -->
+        {% if all_predictions and all_predictions|length > 1 %}
+        {% set diseases = all_predictions.values()|map(attribute='disease')|list %}
+        {% set all_agree = diseases|unique|list|length == 1 %}
+        <div class="mb-4 p-3 rounded {{ 'model-agree' if all_agree else 'model-differ' }}">
+          <h5 class="mb-3">
+            <i class="fas fa-{% if all_agree %}check-circle text-success{% else %}exclamation-triangle text-warning{% endif %}"></i>
+            Model Consensus —
+            <strong>{% if all_agree %}All models agree{% else %}Models disagree (ensemble vote used){% endif %}</strong>
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered bg-white mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Model</th>
+                  <th>Predicted Disease</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for model_name, info in all_predictions.items() %}
+                <tr>
+                  <td><strong>{{ model_name }}</strong></td>
+                  <td>{{ info.disease }}</td>
+                  <td>
+                    {% if info.confidence %}
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height:8px;">
+                        <div class="progress-bar bg-{% if info.confidence >= 80 %}success{% elif info.confidence >= 50 %}warning{% else %}danger{% endif %}"
+                             style="width:{{ info.confidence }}%"></div>
+                      </div>
+                      {{ info.confidence }}%
+                    </div>
+                    {% else %}N/A{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ── Top Contributing Symptoms ──────────────────────────────── -->
+        {% if top_symptoms %}
+        <div class="mb-4 p-3 rounded" style="background:#f0f4ff; border-left:4px solid #4a90e2;">
+          <h5 class="mb-3"><i class="fas fa-brain text-primary"></i> Key Symptoms Driving This Prediction</h5>
+          {% for item in top_symptoms %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{{ item.symptom }}</span>
+              <small class="text-muted">{{ item.importance }}% importance</small>
+            </div>
+            <div class="progress" style="height:8px;">
+              <div class="importance-bar" style="width:{{ [item.importance * 5, 100]|min }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <small class="text-muted mt-2 d-block">Importance scores are derived from Random Forest feature importances.</small>
+        </div>
+        {% endif %}
+
+        <!-- ── Recommendation Cards ────────────────────────────────────── -->
         <div class="results-grid">
-          <!-- Description Card (Full Width) -->
+
+          <!-- Description -->
           <div class="result-card description-card description-full-width">
             <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-info-circle"></i>
-              </div>
+              <div class="card-icon"><i class="fas fa-info-circle"></i></div>
               <h3 class="card-title">Disease Information</h3>
             </div>
             <div class="card-content">
@@ -47,12 +129,10 @@
             </div>
           </div>
 
-          <!-- Medications Card -->
+          <!-- Medications -->
           <div class="result-card medications-card">
             <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-pills"></i>
-              </div>
+              <div class="card-icon"><i class="fas fa-pills"></i></div>
               <h3 class="card-title">Medications</h3>
             </div>
             <div class="card-content">
@@ -63,20 +143,15 @@
                 {% endfor %}
               </ul>
               {% else %}
-              <div class="empty-state">
-                <i class="fas fa-info-circle"></i>
-                No specific medications recommended
-              </div>
+              <div class="empty-state"><i class="fas fa-info-circle"></i> No specific medications recommended</div>
               {% endif %}
             </div>
           </div>
 
-          <!-- Diet Card -->
+          <!-- Diet -->
           <div class="result-card diet-card">
             <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-utensils"></i>
-              </div>
+              <div class="card-icon"><i class="fas fa-utensils"></i></div>
               <h3 class="card-title">Recommended Diet</h3>
             </div>
             <div class="card-content">
@@ -87,102 +162,114 @@
                 {% endfor %}
               </ul>
               {% else %}
-              <div class="empty-state">
-                <i class="fas fa-info-circle"></i>
-                No specific dietary recommendations available
-              </div>
+              <div class="empty-state"><i class="fas fa-info-circle"></i> No specific dietary recommendations available</div>
               {% endif %}
             </div>
           </div>
 
-          <!-- Precautions Card -->
+          <!-- Precautions -->
           <div class="result-card precautions-card">
             <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-shield-alt"></i>
-              </div>
+              <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
               <h3 class="card-title">Precautions</h3>
             </div>
             <div class="card-content">
               {% if recs.precautions %}
               <ul class="recommendation-list">
-                {% for precaution in recs.precautions %}
-                <li class="recommendation-item">{{ precaution }}</li>
+                {% for p in recs.precautions %}
+                <li class="recommendation-item">{{ p }}</li>
                 {% endfor %}
               </ul>
               {% else %}
-              <div class="empty-state">
-                <i class="fas fa-info-circle"></i>
-                No specific precautions listed
-              </div>
+              <div class="empty-state"><i class="fas fa-info-circle"></i> No specific precautions listed</div>
               {% endif %}
             </div>
           </div>
 
-          <!-- Workouts Card -->
+          <!-- Workouts -->
           <div class="result-card workouts-card">
             <div class="card-header">
-              <div class="card-icon">
-                <i class="fas fa-dumbbell"></i>
-              </div>
+              <div class="card-icon"><i class="fas fa-dumbbell"></i></div>
               <h3 class="card-title">Suggested Exercises</h3>
             </div>
             <div class="card-content">
               {% if recs.workouts %}
               <ul class="recommendation-list">
-                {% for workout in recs.workouts %}
-                <li class="recommendation-item">{{ workout }}</li>
+                {% for w in recs.workouts %}
+                <li class="recommendation-item">{{ w }}</li>
                 {% endfor %}
               </ul>
               {% else %}
-              <div class="empty-state">
-                <i class="fas fa-info-circle"></i>
-                No specific exercise recommendations available
-              </div>
+              <div class="empty-state"><i class="fas fa-info-circle"></i> No specific exercise recommendations available</div>
               {% endif %}
             </div>
           </div>
         </div>
 
-        <!-- Disclaimer -->
-        <div class="disclaimer">
+        <!-- ── Feedback Form (authenticated users only) ────────────────── -->
+        {% if not demo_mode and diagnosis_id %}
+        <div class="mt-4 p-4 rounded" style="background:#f8f9fa; border:1px solid #dee2e6;">
+          <h5><i class="fas fa-star text-warning"></i> Rate This Prediction</h5>
+          <p class="text-muted small">Your feedback helps improve the system.</p>
+          <form method="POST" action="{{ url_for('submit_feedback') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="diagnosis_id" value="{{ diagnosis_id }}" />
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Accuracy Rating</label>
+              <div class="star-rating">
+                {% for i in [5,4,3,2,1] %}
+                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" class="d-none" />
+                <label for="star{{ i }}">
+                  <i class="fas fa-star" aria-hidden="true"></i>
+                  <span class="visually-hidden">{{ i }} star{% if i != 1 %}s{% endif %}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="feedback" class="form-label fw-bold">Comments (optional)</label>
+              <textarea class="form-control" id="feedback" name="feedback" rows="2"
+                        placeholder="Was the prediction accurate? Any comments?"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-paper-plane"></i> Submit Feedback
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- ── Disclaimer ──────────────────────────────────────────────── -->
+        <div class="disclaimer mt-4">
           <i class="fas fa-exclamation-triangle"></i>
-          <strong>Medical Disclaimer:</strong> This AI-generated diagnosis is
-          for informational purposes only and should not replace professional
-          medical advice. Please consult with a qualified healthcare provider
-          for proper diagnosis and treatment.
+          <strong>Medical Disclaimer:</strong> This AI-generated diagnosis is for informational
+          purposes only and should not replace professional medical advice. Please consult a
+          qualified healthcare provider for proper diagnosis and treatment.
         </div>
 
-        <!-- Action Section -->
-        <div class="action-section">
-          <a href="/" class="back-btn">
-            <i class="fas fa-arrow-left"></i>
-            Back to Symptom Checker
+        <!-- ── Actions ────────────────────────────────────────────────── -->
+        <div class="action-section mt-3 d-flex gap-3 flex-wrap justify-content-center">
+          <a href="{{ url_for('demo') if demo_mode else url_for('home') }}" class="back-btn">
+            <i class="fas fa-plus-circle"></i> New Diagnosis
           </a>
+          {% if not demo_mode %}
+          <a href="{{ url_for('profile') }}" class="back-btn" style="background:#6c757d;">
+            <i class="fas fa-history"></i> View History
+          </a>
+          {% endif %}
         </div>
+
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script>
-      //  smooth scrolling and enhanced hover effects
       document.addEventListener("DOMContentLoaded", function () {
-        // Animate cards on load
-        const cards = document.querySelectorAll(".result-card");
-        cards.forEach((card, index) => {
-          card.style.animationDelay = `${index * 0.1}s`;
-        });
-
-        //  click effects to recommendation items
-        const recommendationItems = document.querySelectorAll(
-          ".recommendation-item"
-        );
-        recommendationItems.forEach((item) => {
-          item.addEventListener("click", function () {
-            this.style.transform = "scale(0.98)";
-            setTimeout(() => {
-              this.style.transform = "";
-            }, 150);
-          });
+        document.querySelectorAll(".result-card").forEach((card, i) => {
+          card.style.animationDelay = `${i * 0.1}s`;
         });
       });
     </script>
