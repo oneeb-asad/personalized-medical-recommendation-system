@@ -1,326 +1,338 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory
-from flask_login import login_required, current_user
-import pickle
-import pandas as pd
-import numpy as np
 import ast
 import os
-import json
+import pickle
 
-# Import authentication system
-from auth import setup_auth, add_auth_routes
+import numpy as np
+import pandas as pd
+from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
+from flask_login import current_user, login_required
+from flask_wtf.csrf import CSRFProtect
 
-# Import symptom icons
+from auth import add_auth_routes, setup_auth
 from symptom_icons import get_all_symptom_icons
 
-# Get the directory containing this script
-base_dir = os.path.dirname(os.path.abspath(__file__))
-models_dir = os.path.join(base_dir, '..', 'models')
-data_dir = os.path.join(base_dir, '..', 'data')
-results_dir = os.path.join(base_dir, '..', 'results')
+# ── String constants ───────────────────────────────────────────────────────────
+RF_NAME        = 'Random Forest'
+DT_NAME        = 'Decision Tree'
+NN_NAME        = 'Neural Network'
+INDEX_TEMPLATE = 'index.html'
 
-# === Load Trained Model and Encoder ===
-rf_model = pickle.load(open(os.path.join(models_dir, 'random_forest.pkl'), 'rb'))
-disease_encoder = pickle.load(open(os.path.join(models_dir, 'disease_encoder.pkl'), 'rb'))
+# ── Paths ──────────────────────────────────────────────────────────────────────
+_BASE    = os.path.dirname(os.path.abspath(__file__))
+_MODELS  = os.path.join(_BASE, '..', 'models')
+_DATA    = os.path.join(_BASE, '..', 'data')
+_RESULTS = os.path.join(_BASE, '..', 'results')
 
-# Try to load other models if they exist
+# ── Load models ────────────────────────────────────────────────────────────────
+def _load_pkl(name):
+    with open(os.path.join(_MODELS, name), 'rb') as f:
+        return pickle.load(f)
+
+rf_model        = _load_pkl('random_forest.pkl')
+disease_encoder = _load_pkl('disease_encoder.pkl')
+
 try:
-    dt_model = pickle.load(open(os.path.join(models_dir, 'decision_tree.pkl'), 'rb'))
-    nn_model = pickle.load(open(os.path.join(models_dir, 'neural_network.pkl'), 'rb'))
+    dt_model = _load_pkl('decision_tree.pkl')
+    nn_model = _load_pkl('neural_network.pkl')
     all_models_loaded = True
-except:
+except Exception:
     dt_model = None
     nn_model = None
     all_models_loaded = False
 
-# === Load Supporting CSV Files ===
-desc_df = pd.read_csv(os.path.join(data_dir, 'description.csv'))
-med_df = pd.read_csv(os.path.join(data_dir, 'medications.csv'))
-diet_df = pd.read_csv(os.path.join(data_dir, 'diets.csv'))
-prec_df = pd.read_csv(os.path.join(data_dir, 'precautions_df.csv'))
-work_df = pd.read_csv(os.path.join(data_dir, 'workout_df.csv'))
-training_df = pd.read_csv(os.path.join(data_dir, 'Training.csv'))
-
-# === Extract List of Symptoms from Training Data ===
+# ── Load & index supporting data ───────────────────────────────────────────────
+training_df  = pd.read_csv(os.path.join(_DATA, 'Training.csv'))
 symptom_list = list(training_df.columns[:-1])
 
-# === Initialize Flask App ===
-app = Flask(__name__)
+desc_df = pd.read_csv(os.path.join(_DATA, 'description.csv')).set_index('Disease')
+med_df  = pd.read_csv(os.path.join(_DATA, 'medications.csv')).set_index('Disease')
+diet_df = pd.read_csv(os.path.join(_DATA, 'diets.csv')).set_index('Disease')
+prec_df = pd.read_csv(os.path.join(_DATA, 'precautions_df.csv'))
+work_df = pd.read_csv(os.path.join(_DATA, 'workout_df.csv'))
 
-# Setup authentication
+# Severity weights: symptom → int weight (1-7); default 1 if missing
+_sev_df  = pd.read_csv(os.path.join(_DATA, 'Symptom-severity.csv'))
+SEVERITY = dict(zip(_sev_df['Symptom'], _sev_df['weight']))
+
+# Random Forest feature importances (for per-prediction explanation)
+RF_IMPORTANCE = dict(zip(symptom_list, rf_model.feature_importances_))
+
+# Valid symptom set for input validation
+VALID_SYMPTOMS = set(symptom_list)
+
+# ── Flask app ──────────────────────────────────────────────────────────────────
+app          = Flask(__name__)
+csrf         = CSRFProtect()
 login_manager = setup_auth(app)
+csrf.init_app(app)
 add_auth_routes(app)
 
-# === Recommendation Function ===
+# ── Helpers ────────────────────────────────────────────────────────────────────
+def _build_input_vector(selected):
+    return [1 if s in selected else 0 for s in symptom_list]
+
+
+def _severity_score(selected):
+    return sum(SEVERITY.get(s, 1) for s in selected)
+
+
+def _top_symptoms(selected, top_n=5):
+    ranked = sorted(
+        [(s, RF_IMPORTANCE.get(s, 0)) for s in selected],
+        key=lambda x: x[1], reverse=True
+    )
+    return [{'symptom': s.replace('_', ' ').title(), 'importance': round(imp * 100, 1)}
+            for s, imp in ranked[:top_n]]
+
+
 def get_all_recommendations(disease_name):
     result = {}
 
     try:
-        result['description'] = desc_df.loc[desc_df['Disease'] == disease_name, 'Description'].values[0]
-    except:
+        result['description'] = desc_df.loc[disease_name, 'Description']
+    except Exception:
         result['description'] = 'No description available.'
 
     try:
-        meds = med_df.loc[med_df['Disease'] == disease_name, 'Medication'].values[0]
-        result['medications'] = ast.literal_eval(meds)
-    except:
+        result['medications'] = ast.literal_eval(med_df.loc[disease_name, 'Medication'])
+    except Exception:
         result['medications'] = []
 
     try:
-        diet = diet_df.loc[diet_df['Disease'] == disease_name, 'Diet'].values[0]
-        result['diet'] = ast.literal_eval(diet)
-    except:
+        result['diet'] = ast.literal_eval(diet_df.loc[disease_name, 'Diet'])
+    except Exception:
         result['diet'] = []
 
     try:
         prec_row = prec_df.loc[prec_df['Disease'] == disease_name].iloc[:, 2:].values.flatten()
         result['precautions'] = [p for p in prec_row if str(p) != 'nan']
-    except:
+    except Exception:
         result['precautions'] = []
 
     try:
-        workouts = work_df.loc[work_df['disease'] == disease_name, 'workout'].tolist()
-        result['workouts'] = workouts
-    except:
+        result['workouts'] = work_df.loc[work_df['disease'] == disease_name, 'workout'].tolist()
+    except Exception:
         result['workouts'] = []
 
     return result
 
-def get_prediction_confidence(input_vector):
-    """Get prediction confidence from the model"""
+
+def _confidence(model, vec):
     try:
-        probabilities = rf_model.predict_proba([input_vector])[0]
-        confidence = np.max(probabilities) * 100
-        return round(confidence, 2)
-    except:
+        return round(float(np.max(model.predict_proba([vec])[0])) * 100, 2)
+    except Exception:
         return None
 
+
 def get_all_model_predictions(input_vector):
-    """Get predictions from all available models"""
     predictions = {}
-    
-    # Random Forest
+
     try:
-        rf_pred = rf_model.predict([input_vector])[0]
-        rf_disease = disease_encoder.inverse_transform([rf_pred])[0]
-        rf_conf = get_prediction_confidence(input_vector)
-        predictions['Random Forest'] = {
-            'disease': rf_disease,
-            'confidence': rf_conf
+        pred = rf_model.predict([input_vector])[0]
+        predictions[RF_NAME] = {
+            'disease':    disease_encoder.inverse_transform([pred])[0],
+            'confidence': _confidence(rf_model, input_vector),
         }
-    except:
+    except Exception:
         pass
-    
-    # Decision Tree
+
     if dt_model:
         try:
-            dt_pred = dt_model.predict([input_vector])[0]
-            dt_disease = disease_encoder.inverse_transform([dt_pred])[0]
-            dt_proba = dt_model.predict_proba([input_vector])[0]
-            dt_conf = round(np.max(dt_proba) * 100, 2)
-            predictions['Decision Tree'] = {
-                'disease': dt_disease,
-                'confidence': dt_conf
+            pred = dt_model.predict([input_vector])[0]
+            predictions[DT_NAME] = {
+                'disease':    disease_encoder.inverse_transform([pred])[0],
+                'confidence': _confidence(dt_model, input_vector),
             }
-        except:
+        except Exception:
             pass
-    
-    # Neural Network
+
     if nn_model:
         try:
-            nn_pred = nn_model.predict([input_vector])[0]
-            nn_disease = disease_encoder.inverse_transform([nn_pred])[0]
-            nn_proba = nn_model.predict_proba([input_vector])[0]
-            nn_conf = round(np.max(nn_proba) * 100, 2)
-            predictions['Neural Network'] = {
-                'disease': nn_disease,
-                'confidence': nn_conf
+            pred = nn_model.predict([input_vector])[0]
+            predictions[NN_NAME] = {
+                'disease':    disease_encoder.inverse_transform([pred])[0],
+                'confidence': _confidence(nn_model, input_vector),
             }
-        except:
+        except Exception:
             pass
-    
+
     return predictions
 
-# === Routes ===
-@app.route('/')
+
+def _ensemble_vote(all_predictions):
+    votes = {}
+    for info in all_predictions.values():
+        d = info['disease']
+        votes[d] = votes.get(d, 0) + 1
+
+    max_votes  = max(votes.values())
+    candidates = [d for d, v in votes.items() if v == max_votes]
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    rf_pick = all_predictions.get(RF_NAME, {}).get('disease')
+    return rf_pick if rf_pick in candidates else candidates[0]
+
+
+def _index_ctx(user=None, demo_mode=False, error=None):
+    ctx = {
+        'symptoms':      symptom_list,
+        'symptom_icons': get_all_symptom_icons(symptom_list),
+        'demo_mode':     demo_mode,
+    }
+    if user is not None:
+        ctx['user'] = user
+    if error:
+        ctx['error'] = error
+    return ctx
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────────
+@app.route('/', methods=['GET'])
 def home():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
-    
-    symptom_icons = get_all_symptom_icons(symptom_list)
-    
-    return render_template('index.html', 
-                         symptoms=symptom_list, 
-                         symptom_icons=symptom_icons,
-                         user=current_user)
+    return render_template(INDEX_TEMPLATE, **_index_ctx(user=current_user))
+
 
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
-    selected_symptoms = request.form.getlist('symptoms')
-    
-    if not selected_symptoms:
-        symptom_icons = get_all_symptom_icons(symptom_list)
-        return render_template('index.html', 
-                             symptoms=symptom_list, 
-                             symptom_icons=symptom_icons,
-                             user=current_user,
-                             error="Please select at least one symptom before predicting.")
+    selected = [s for s in request.form.getlist('symptoms') if s in VALID_SYMPTOMS]
 
-    input_vector = [1 if symptom in selected_symptoms else 0 for symptom in symptom_list]
+    if not selected:
+        return render_template(INDEX_TEMPLATE,
+                               **_index_ctx(user=current_user,
+                                            error="Please select at least one valid symptom."))
 
+    vec             = _build_input_vector(selected)
+    all_predictions = get_all_model_predictions(vec)
+
+    if not all_predictions:
+        return render_template(INDEX_TEMPLATE,
+                               **_index_ctx(user=current_user,
+                                            error="Prediction failed. Please try again."))
+
+    disease_name = _ensemble_vote(all_predictions)
+    confidence   = all_predictions.get(RF_NAME, {}).get('confidence')
+    diagnosis_id = current_user.save_diagnosis(selected, disease_name, confidence)
+
+    return render_template('result.html',
+                           disease=disease_name,
+                           recs=get_all_recommendations(disease_name),
+                           confidence=confidence,
+                           all_predictions=all_predictions,
+                           selected_symptoms=selected,
+                           top_symptoms=_top_symptoms(selected),
+                           severity_score=_severity_score(selected),
+                           diagnosis_id=diagnosis_id,
+                           user=current_user)
+
+
+@app.route('/feedback', methods=['POST'])
+@login_required
+def submit_feedback():
     try:
-        # Get predictions from all models
-        all_predictions = get_all_model_predictions(input_vector)
-        
-        # Use Random Forest as primary prediction
-        primary_prediction = all_predictions.get('Random Forest', {})
-        disease_name = primary_prediction.get('disease')
-        confidence = primary_prediction.get('confidence')
+        diagnosis_id  = int(request.form.get('diagnosis_id', 0))
+        rating        = int(request.form.get('rating', 0))
+        feedback_text = request.form.get('feedback', '').strip()
 
-        # Get recommendations
-        recs = get_all_recommendations(disease_name)
+        if diagnosis_id and 1 <= rating <= 5:
+            current_user.save_feedback(diagnosis_id, rating, feedback_text)
+            flash('Thank you for your feedback!', 'success')
+        else:
+            flash('Please provide a rating between 1 and 5.', 'warning')
+    except Exception:
+        flash('Error submitting feedback. Please try again.', 'danger')
 
-        # Save diagnosis to user history
-        current_user.save_diagnosis(selected_symptoms, disease_name, confidence)
+    return redirect(url_for('profile'))
 
-        # Show result page with all model predictions
-        return render_template('result.html', 
-                             disease=disease_name, 
-                             recs=recs,
-                             confidence=confidence,
-                             all_predictions=all_predictions,
-                             selected_symptoms=selected_symptoms,
-                             user=current_user)
-    
-    except Exception as e:
-        symptom_icons = get_all_symptom_icons(symptom_list)
-        return render_template('index.html', 
-                             symptoms=symptom_list, 
-                             symptom_icons=symptom_icons,
-                             user=current_user,
-                             error=f"An error occurred during prediction: {str(e)}")
 
-@app.route('/evaluation')
+@app.route('/evaluation', methods=['GET'])
 @login_required
 def evaluation():
-    """Display model evaluation results"""
-    
-    # Check if evaluation results exist
-    charts_exist = all([
-        os.path.exists(os.path.join(results_dir, 'accuracy_comparison.png')),
-        os.path.exists(os.path.join(results_dir, 'metrics_comparison.png')),
-        os.path.exists(os.path.join(results_dir, 'confusion_matrices.png')),
-        os.path.exists(os.path.join(results_dir, 'feature_importance.png'))
-    ])
-    
-    # Load evaluation metrics if available
-    evaluation_data = {
-        'charts_available': charts_exist,
-        'models_loaded': all_models_loaded,
-        'models': ['Random Forest', 'Decision Tree', 'Neural Network'] if all_models_loaded else ['Random Forest'],
-        'dataset_size': len(training_df),
-        'num_symptoms': len(symptom_list),
-        'num_diseases': training_df['prognosis'].nunique()
-    }
-    
-    return render_template('evaluation.html', 
-                         evaluation=evaluation_data,
-                         user=current_user)
+    charts_exist = all(
+        os.path.exists(os.path.join(_RESULTS, f))
+        for f in ('accuracy_comparison.png', 'metrics_comparison.png',
+                  'confusion_matrices.png', 'feature_importance.png')
+    )
+    return render_template('evaluation.html',
+                           evaluation={
+                               'charts_available': charts_exist,
+                               'models_loaded':    all_models_loaded,
+                               'models':           [RF_NAME, DT_NAME, NN_NAME]
+                                                   if all_models_loaded else [RF_NAME],
+                               'dataset_size':     len(training_df),
+                               'num_symptoms':     len(symptom_list),
+                               'num_diseases':     training_df['prognosis'].nunique(),
+                           },
+                           user=current_user)
 
-# @app.route('/feedback', methods=['POST'])
-# @login_required
-# def submit_feedback():
-#     """Handle user feedback on predictions"""
-#     try:
-#         diagnosis_id = request.form.get('diagnosis_id')
-#         rating = request.form.get('rating')
-#         feedback_text = request.form.get('feedback')
-        
-#         flash('Thank you for your feedback! It helps improve our system.', 'success')
-        
-#     except Exception as e:
-#         flash('Error submitting feedback. Please try again.', 'danger')
-    
-#     return redirect(url_for('profile'))
 
-@app.route('/results/<path:filename>')
+@app.route('/results/<path:filename>', methods=['GET'])
 def serve_results(filename):
-    """Serve files from results directory"""
-    return send_from_directory(results_dir, filename)
+    return send_from_directory(_RESULTS, filename)
 
-# === Demo routes ===
-@app.route('/demo')
+
+# ── Demo routes (unauthenticated) ──────────────────────────────────────────────
+@app.route('/demo', methods=['GET'])
 def demo():
-    """Demo access without authentication"""
-    symptom_icons = get_all_symptom_icons(symptom_list)
-    return render_template('index.html', 
-                         symptoms=symptom_list, 
-                         symptom_icons=symptom_icons,
-                         demo_mode=True)
+    return render_template(INDEX_TEMPLATE, **_index_ctx(demo_mode=True))
+
 
 @app.route('/demo-predict', methods=['POST'])
 def demo_predict():
-    """Demo prediction without authentication"""
-    selected_symptoms = request.form.getlist('symptoms')
-    
-    if not selected_symptoms:
-        symptom_icons = get_all_symptom_icons(symptom_list)
-        return render_template('index.html', 
-                             symptoms=symptom_list, 
-                             symptom_icons=symptom_icons,
-                             demo_mode=True,
-                             error="Please select at least one symptom before predicting.")
+    selected = [s for s in request.form.getlist('symptoms') if s in VALID_SYMPTOMS]
 
-    input_vector = [1 if symptom in selected_symptoms else 0 for symptom in symptom_list]
+    if not selected:
+        return render_template(INDEX_TEMPLATE,
+                               **_index_ctx(demo_mode=True,
+                                            error="Please select at least one valid symptom."))
 
-    try:
-        prediction = rf_model.predict([input_vector])[0]
-        disease_name = disease_encoder.inverse_transform([prediction])[0]
-        confidence = get_prediction_confidence(input_vector)
-        recs = get_all_recommendations(disease_name)
+    vec             = _build_input_vector(selected)
+    all_predictions = get_all_model_predictions(vec)
 
-        return render_template('result.html', 
-                             disease=disease_name, 
-                             recs=recs,
-                             confidence=confidence,
-                             selected_symptoms=selected_symptoms,
-                             demo_mode=True)
-    
-    except Exception as e:
-        symptom_icons = get_all_symptom_icons(symptom_list)
-        return render_template('index.html', 
-                             symptoms=symptom_list, 
-                             symptom_icons=symptom_icons,
-                             demo_mode=True,
-                             error=f"An error occurred during prediction: {str(e)}")
+    if not all_predictions:
+        return render_template(INDEX_TEMPLATE,
+                               **_index_ctx(demo_mode=True,
+                                            error="Prediction failed. Please try again."))
 
-# === API Endpoints ===
-@app.route('/api/symptoms')
+    disease_name = _ensemble_vote(all_predictions)
+    confidence   = all_predictions.get(RF_NAME, {}).get('confidence')
+
+    return render_template('result.html',
+                           disease=disease_name,
+                           recs=get_all_recommendations(disease_name),
+                           confidence=confidence,
+                           all_predictions=all_predictions,
+                           selected_symptoms=selected,
+                           top_symptoms=_top_symptoms(selected),
+                           severity_score=_severity_score(selected),
+                           demo_mode=True)
+
+
+# ── API ────────────────────────────────────────────────────────────────────────
+@app.route('/api/symptoms', methods=['GET'])
 def api_symptoms():
-    """API endpoint to get all symptoms with their icons"""
-    symptom_icons = get_all_symptom_icons(symptom_list)
     return {
-        'symptoms': symptom_list,
-        'icons': symptom_icons,
-        'total_symptoms': len(symptom_list)
-    }
-
-@app.route('/api/health')
-def api_health():
-    """Health check endpoint"""
-    return {
-        'status': 'healthy',
-        'model_loaded': rf_model is not None,
+        'symptoms':       symptom_list,
+        'icons':          get_all_symptom_icons(symptom_list),
         'total_symptoms': len(symptom_list),
-        'all_models_loaded': all_models_loaded
     }
 
 
-# === Start Server ===
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    return {
+        'status':            'healthy',
+        'model_loaded':      rf_model is not None,
+        'total_symptoms':    len(symptom_list),
+        'all_models_loaded': all_models_loaded,
+    }
+
+
+# ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    auth_template_dir = os.path.join('templates', 'auth')
-    if not os.path.exists(auth_template_dir):
-        os.makedirs(auth_template_dir)
-    
-    app.run(debug=True)
+    os.makedirs(os.path.join('templates', 'auth'), exist_ok=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true')
