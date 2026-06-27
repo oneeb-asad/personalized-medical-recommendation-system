@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Model files (large binaries — regenerate via model_training_evaluation.py)
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# Generated results (regenerate via run_complete_evaluation.py)
+results/*.png
+results/*.html
+
+# Secrets
+.env
+secrets.py
